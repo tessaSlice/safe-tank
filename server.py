@@ -16,7 +16,14 @@ import requests
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 
-LLAMA_URL = "http://raspberrypi.local:18081/completion"
+"""
+curl http://172.20.10.6:18081/completion \
+  -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"prompt":"Hello from the server!", "n_predict":32}'
+"""
+
+LLAMA_URL = "http://172.20.10.6:18081/completion"
 N_PREDICT = 200
 
 STATIC_DIR = os.path.dirname(os.path.abspath(__file__))

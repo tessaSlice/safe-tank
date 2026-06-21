@@ -1,6 +1,15 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python4
 import rpi_gpio as GPIO
 import time
+import json
+import os
+
+SENSOR_DATA_FILE = "/tmp/sensor_data.json"
+MAX_FILE_SIZE_BYTES = 64 * 1024  # 64 KB
+OVERWRITE_INTERVAL_S = 300       # Overwrite file contents every 5 minutes
+
+_file_start_time = time.time()
+_vibration_active = False
 
 DHTPIN = 17 # GPIO 17
 VibratePin = 16
@@ -130,34 +139,70 @@ def Led(x):
 
 last_red_time = time.time()
 
+def write_sensor_data(humidity=None, temperature=None, vibration=False):
+    global _file_start_time
+
+    now = time.time()
+    elapsed = now - _file_start_time
+    file_too_old = elapsed >= OVERWRITE_INTERVAL_S
+    file_too_large = (os.path.exists(SENSOR_DATA_FILE) and
+                      os.path.getsize(SENSOR_DATA_FILE) > MAX_FILE_SIZE_BYTES)
+
+    if file_too_old or file_too_large:
+        _file_start_time = now
+
+    reading = {"timestamp": now, "vibration": vibration}
+    if humidity is not None:
+        reading["humidity"] = humidity
+    if temperature is not None:
+        reading["temperature"] = temperature
+
+    if file_too_old or file_too_large or not os.path.exists(SENSOR_DATA_FILE):
+        data = {"readings": [reading]}
+    else:
+        try:
+            with open(SENSOR_DATA_FILE, "r") as f:
+                data = json.load(f)
+            data["readings"].append(reading)
+        except (json.JSONDecodeError, KeyError, IOError):
+            data = {"readings": [reading]}
+
+    with open(SENSOR_DATA_FILE, "w") as f:
+        json.dump(data, f)
+
+
 def handle_vibration(x):
+    global _vibration_active
     print ("vibration detected")
+    _vibration_active = True
     last_red_time = time.time()
     led_state = 0
     Led(led_state)
 
 def main():
+    global _vibration_active
     GPIO.setup(Gpin, GPIO.OUT)
     GPIO.setup(Rpin, GPIO.OUT)
     GPIO.setup(VibratePin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
     GPIO.add_event_detect(VibratePin, GPIO.RISING, callback=handle_vibration)
-    #tt = 0
     led_state = 1
     while True:
         result = read_dht11_dat()
-        # Turn it back to green after 5 seconds have elapsed
         print ("led state = ", led_state)
         if (time.time() - last_red_time) >= 1000:
             led_state = 1
         Led(led_state)
-        #tt = tt + 1
+
+        humidity = None
+        temperature = None
         if result:
-            #tt = 0
             humidity, temperature = result
             print ("humidity: %s %%,  Temperature: %s °C" % (humidity, temperature))
+
+        write_sensor_data(humidity=humidity, temperature=temperature,
+                          vibration=_vibration_active)
+        _vibration_active = False
         time.sleep(2)
-        #if (tt == 10):
-        #    exit(0)
 
 def destroy():
     GPIO.cleanup()

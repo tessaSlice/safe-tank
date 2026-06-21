@@ -2,9 +2,9 @@
 Bridge server for the sensor dashboard.
 
 Endpoints:
-  POST /sensors  — Pi (or any device) pushes a JSON blob of all sensor readings
   GET  /sensors  — Frontend polls this to get the latest readings
   POST /query    — Frontend sends {query} → server forwards to llama-server → returns {response}
+  GET  /predict  — Returns predictive maintenance analysis based on recent sensor history
 
 Run:
     pip install flask flask-cors requests
@@ -13,6 +13,7 @@ Run:
 
 import os
 import time
+import threading
 from collections import deque
 import requests
 from flask import Flask, request, jsonify, send_from_directory
@@ -28,12 +29,15 @@ curl http://172.20.10.6:18081/completion \
 LLAMA_URL = "http://172.20.10.6:18081/completion"
 N_PREDICT = 200
 
+PI_SENSOR_URL = "http://172.20.10.6:8080/sensors"
+PI_POLL_INTERVAL_S = 30
+
 STATIC_DIR = os.path.dirname(os.path.abspath(__file__))
 
 app = Flask(__name__, static_folder=STATIC_DIR, static_url_path="")
 CORS(app)
 
-# Latest sensor snapshot (updated by POST /sensors)
+# Latest sensor snapshot (updated by polling the Pi)
 latest_sensors = {}
 
 # Rolling history — last 20 readings with timestamps
@@ -47,17 +51,21 @@ def index():
     return send_from_directory(STATIC_DIR, "index.html")
 
 
-# ── Sensor endpoints ──────────────────────────────────────────────────────────
+# ── Sensor polling (pulls from Pi) ────────────────────────────────────────────
 
-@app.route("/sensors", methods=["POST"])
-def receive_sensors():
-    """Devices POST their sensor JSON here."""
-    data = request.get_json(force=True, silent=True)
-    if not isinstance(data, dict):
-        return jsonify({"error": "Expected a JSON object"}), 400
-    latest_sensors.update(data)
-    sensor_history.append({"t": time.time(), **data})
-    return jsonify({"ok": True})
+def _poll_pi_sensors():
+    """Background thread that pulls sensor data from the Pi."""
+    while True:
+        try:
+            resp = requests.get(PI_SENSOR_URL, timeout=5)
+            if resp.ok:
+                data = resp.json()
+                if isinstance(data, dict):
+                    latest_sensors.update(data)
+                    sensor_history.append({"t": time.time(), **data})
+        except Exception:
+            pass
+        time.sleep(PI_POLL_INTERVAL_S)
 
 
 @app.route("/sensors", methods=["GET"])
@@ -156,4 +164,6 @@ def predict():
 
 
 if __name__ == "__main__":
+    poller = threading.Thread(target=_poll_pi_sensors, daemon=True)
+    poller.start()
     app.run(host="0.0.0.0", port=5000, debug=False)

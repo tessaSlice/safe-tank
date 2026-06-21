@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sensor Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="header-left">
+        <h1>Sensor Dashboard</h1>
+        <span id="connection-badge" class="badge disconnected">Disconnected</span>
+      </div>
+      <div class="header-right">
+        <span class="last-update-label">Last update:</span>
+        <span id="last-update">—</span>
+      </div>
+    </header>
+
+    <main>
+      <!-- Sensor Grid -->
+      <section class="sensor-grid">
+
+        <div class="sensor-card" id="card-vibration">
+          <div class="sensor-icon">〰️</div>
+          <div class="sensor-info">
+            <div class="sensor-name">Vibration</div>
+            <div class="sensor-value" id="val-vibration">—</div>
+            <div class="sensor-unit">detected</div>
+          </div>
+          <div class="status-dot" id="dot-vibration"></div>
+        </div>
+
+        <div class="sensor-card" id="card-humidity">
+          <div class="sensor-icon">💧</div>
+          <div class="sensor-info">
+            <div class="sensor-name">Humidity</div>
+            <div class="sensor-value" id="val-humidity">—</div>
+            <div class="sensor-unit">%</div>
+          </div>
+          <div class="gauge-bar">
+            <div class="gauge-fill" id="gauge-humidity"></div>
+          </div>
+          <div class="status-dot" id="dot-humidity"></div>
+        </div>
+
+        <div class="sensor-card" id="card-temperature">
+          <div class="sensor-icon">🌡️</div>
+          <div class="sensor-info">
+            <div class="sensor-name">Temperature</div>
+            <div class="sensor-value" id="val-temperature">—</div>
+            <div class="sensor-unit">°C</div>
+          </div>
+          <div class="gauge-bar">
+            <div class="gauge-fill" id="gauge-temperature"></div>
+          </div>
+          <div class="status-dot" id="dot-temperature"></div>
+        </div>
+
+        <div class="sensor-card" id="card-gas">
+          <div class="sensor-icon">🧪</div>
+          <div class="sensor-info">
+            <div class="sensor-name">Gas</div>
+            <div class="sensor-value" id="val-gas">—</div>
+            <div class="sensor-unit">ppm</div>
+          </div>
+          <div class="gauge-bar">
+            <div class="gauge-fill" id="gauge-gas"></div>
+          </div>
+          <div class="status-dot" id="dot-gas"></div>
+        </div>
+
+
+      </section>
+
+      <!-- Status Summary -->
+      <section class="status-bar">
+        <div class="status-item">
+          <span class="status-label">Overall Status:</span>
+          <span id="overall-status" class="overall-badge nominal">Nominal</span>
+        </div>
+        <div class="status-item">
+          <span class="status-label">Alerts:</span>
+          <span id="alert-count">0</span>
+        </div>
+      </section>
+
+      <!-- LLM Query Section -->
+      <section class="llm-section">
+        <div class="llm-header">
+          <h2>Ask the AI</h2>
+          <span class="llm-subtitle">Query the model about your sensor data</span>
+        </div>
+
+        <div class="chat-window" id="chat-window">
+          <div class="chat-placeholder">
+            Ask anything about the sensor readings — e.g. "Is the temperature safe?" or "Explain the gas reading."
+          </div>
+        </div>
+
+        <div class="query-bar">
+          <textarea
+            id="query-input"
+            placeholder="Ask about the sensor data..."
+            rows="2"
+          ></textarea>
+          <button id="send-btn" onclick="sendQuery()">Send</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -30,7 +30,7 @@ LLAMA_URL = "http://172.20.10.6:18081/completion"
 N_PREDICT = 200
 
 PI_SENSOR_URL = "http://172.20.10.6:8080/sensors"
-PI_POLL_INTERVAL_S = 2
+PI_POLL_INTERVAL_S = 30
 
 STATIC_DIR = os.path.dirname(os.path.abspath(__file__))
 

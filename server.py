@@ -12,6 +12,8 @@ Run:
 """
 
 import os
+import time
+from collections import deque
 import requests
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
@@ -34,6 +36,9 @@ CORS(app)
 # Latest sensor snapshot (updated by POST /sensors)
 latest_sensors = {}
 
+# Rolling history — last 20 readings with timestamps
+sensor_history = deque(maxlen=20)
+
 
 # ── Frontend static files ─────────────────────────────────────────────────────
 
@@ -51,6 +56,7 @@ def receive_sensors():
     if not isinstance(data, dict):
         return jsonify({"error": "Expected a JSON object"}), 400
     latest_sensors.update(data)
+    sensor_history.append({"t": time.time(), **data})
     return jsonify({"ok": True})
 
 
@@ -103,6 +109,50 @@ def query():
         return jsonify({"error": str(e)}), 500
 
     return jsonify({"response": content})
+
+
+@app.route("/predict", methods=["GET"])
+def predict():
+    """Analyze sensor history and return a maintenance prediction."""
+    if len(sensor_history) < 2:
+        return jsonify({"prediction": "Not enough data yet. Keep sending sensor readings."})
+
+    rows = []
+    for i, r in enumerate(sensor_history):
+        age = int(time.time() - r["t"])
+        parts = [f"  [{age}s ago]"]
+        if "temperature" in r: parts.append(f"temp={r['temperature']}°C")
+        if "humidity"    in r: parts.append(f"humidity={r['humidity']}%")
+        if "gas"         in r: parts.append(f"gas={r['gas']}ppm")
+        if "vibration"   in r: parts.append(f"vibration={'YES' if r['vibration'] else 'no'}")
+        rows.append(" ".join(parts))
+
+    history_text = "\n".join(rows)
+    prompt = (
+        "You are a predictive maintenance assistant for industrial equipment.\n"
+        "Analyze the sensor history below and identify any concerning trends.\n"
+        "Give a short maintenance recommendation (2-4 sentences): what is the risk, "
+        "how urgent is it, and what action should be taken?\n\n"
+        f"Sensor history (most recent last):\n{history_text}\n\n"
+        "Maintenance assessment:"
+    )
+
+    try:
+        llama_resp = requests.post(
+            LLAMA_URL,
+            json={"prompt": prompt, "n_predict": N_PREDICT},
+            timeout=60,
+        )
+        llama_resp.raise_for_status()
+        content = llama_resp.json().get("content", "").strip()
+    except requests.exceptions.ConnectionError:
+        return jsonify({"error": "Cannot reach llama-server"}), 502
+    except requests.exceptions.Timeout:
+        return jsonify({"error": "llama-server timed out"}), 504
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    return jsonify({"prediction": content})
 
 
 if __name__ == "__main__":

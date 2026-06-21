@@ -27,6 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (CONFIG.liveMode) {
     setBadge("connecting");
     startPolling();
+    startPredictLoop();
   } else {
     setBadge("demo");
     runDemo();
@@ -140,6 +141,23 @@ function updateOverallStatus(alertCount) {
   } else {
     el.textContent = "Alert";   el.className = "overall-badge alert";
   }
+}
+
+// ── Predictive maintenance ────────────────────────────────────────────────────
+async function runPredict() {
+  const out = document.getElementById("predict-output");
+  try {
+    const res = await fetch(`${CONFIG.serverUrl}/predict`);
+    const json = await res.json();
+    out.textContent = json.prediction ?? json.error ?? "(no response)";
+  } catch (err) {
+    out.textContent = `Error: ${err.message}`;
+  }
+}
+
+function startPredictLoop() {
+  runPredict();
+  setInterval(runPredict, 30000);
 }
 
 // ── LLM query ─────────────────────────────────────────────────────────────────

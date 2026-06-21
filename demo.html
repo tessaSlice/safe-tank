@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sensor Dashboard (Demo)</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="header-left">
+        <h1>Sensor Dashboard</h1>
+        <span id="connection-badge" class="badge connected">Live</span>
+      </div>
+      <div class="header-right">
+        <span class="last-update-label">Last update:</span>
+        <span id="last-update">—</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="sensor-grid">
+
+        <div class="sensor-card ok" id="card-vibration">
+          <div class="sensor-icon">〰️</div>
+          <div class="sensor-info">
+            <div class="sensor-name">Vibration</div>
+            <div class="sensor-value" id="val-vibration">NO</div>
+            <div class="sensor-unit">detected</div>
+          </div>
+          <div class="status-dot ok" id="dot-vibration"></div>
+        </div>
+
+        <div class="sensor-card ok" id="card-humidity">
+          <div class="sensor-icon">💧</div>
+          <div class="sensor-info">
+            <div class="sensor-name">Humidity</div>
+            <div class="sensor-value" id="val-humidity">58.3</div>
+            <div class="sensor-unit">%</div>
+          </div>
+          <div class="gauge-bar">
+            <div class="gauge-fill" id="gauge-humidity" style="width: 58.3%; background: var(--ok);"></div>
+          </div>
+          <div class="status-dot ok" id="dot-humidity"></div>
+        </div>
+
+        <div class="sensor-card ok" id="card-temperature">
+          <div class="sensor-icon">🌡️</div>
+          <div class="sensor-info">
+            <div class="sensor-name">Temperature</div>
+            <div class="sensor-value" id="val-temperature">24.2</div>
+            <div class="sensor-unit">°C</div>
+          </div>
+          <div class="gauge-bar">
+            <div class="gauge-fill" id="gauge-temperature" style="width: 48.9%; background: var(--ok);"></div>
+          </div>
+          <div class="status-dot ok" id="dot-temperature"></div>
+        </div>
+
+        <div class="sensor-card" id="card-gas">
+          <div class="sensor-icon">🧪</div>
+          <div class="sensor-info">
+            <div class="sensor-name">Gas</div>
+            <div class="sensor-value" id="val-gas">—</div>
+            <div class="sensor-unit">ppm</div>
+          </div>
+          <div class="gauge-bar">
+            <div class="gauge-fill" id="gauge-gas"></div>
+          </div>
+          <div class="status-dot" id="dot-gas"></div>
+        </div>
+
+      </section>
+
+      <section class="status-bar">
+        <div class="status-item">
+          <span class="status-label">Overall Status:</span>
+          <span id="overall-status" class="overall-badge nominal">Nominal</span>
+        </div>
+        <div class="status-item">
+          <span class="status-label">Alerts:</span>
+          <span id="alert-count">0</span>
+        </div>
+      </section>
+
+      <section class="llm-section">
+        <div class="llm-header">
+          <h2>Ask the AI</h2>
+          <span class="llm-subtitle">Query the model about your sensor data</span>
+        </div>
+
+        <div class="chat-window" id="chat-window">
+          <div class="msg user">
+            <div class="msg-label">You</div>
+            <div class="msg-bubble">Is the temperature safe right now?</div>
+          </div>
+          <div class="msg ai">
+            <div class="msg-label">AI</div>
+            <div class="msg-bubble">Yes, the current temperature of 24.2 °C is well within a safe operating range. No action needed.</div>
+          </div>
+        </div>
+
+        <div class="query-bar">
+          <textarea
+            id="query-input"
+            placeholder="Ask about the sensor data..."
+            rows="2"
+          ></textarea>
+          <button id="send-btn">Send</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    document.getElementById("last-update").textContent = new Date().toLocaleTimeString();
+  </script>
+</body>
+</html>
